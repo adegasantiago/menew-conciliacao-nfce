@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<meta charset="UTF-8">
+<title>Conciliação Notas x NFCe – Grupo Adega Santiago</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f4f5f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.08);
+    --series-1:       #2a78d6;
+    --series-2:       #eb6834;
+    --series-3:       #1baf7a;
+    --danger:         #c22b2b;
+    --danger-bg:      rgba(194,43,43,0.10);
+    --shadow: 0 1px 2px rgba(20,25,40,0.05), 0 8px 20px rgba(20,25,40,0.06);
+    --shadow-sm: 0 1px 2px rgba(20,25,40,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-2:       #d95926;
+      --series-3:       #199e70;
+      --danger:         #e5484d;
+      --danger-bg:      rgba(229,72,77,0.14);
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.4);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+    --series-3:       #199e70;
+    --danger:         #e5484d;
+    --danger-bg:      rgba(229,72,77,0.14);
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.4);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 28px 24px 64px; }
+
+  header.top { margin-bottom: 22px; }
+  header.top h1 { font-size: 23px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 3px; }
+  header.top .meta { color: var(--text-secondary); font-size: 13px; }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .kpi .label { color: var(--text-secondary); font-size: 12px; font-weight: 600; letter-spacing: .01em; }
+  .kpi .value { font-size: 27px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .kpi .sub { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  .kpi.danger .value { color: var(--danger); }
+
+  .filters-bar {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 22px;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 6px; }
+  .filter-group label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .filter-group--action { margin-left: auto; }
+  select, input[type="search"], input[type="date"] {
+    background: var(--page-plane); border: 1px solid var(--border); color: var(--text-primary);
+    border-radius: 7px; padding: 7px 10px; font-size: 13px; font-family: inherit; min-width: 200px;
+  }
+  input[type="date"] { min-width: 140px; }
+  .filter-inline { display: flex; align-items: center; gap: 8px; }
+  .filter-inline span { color: var(--text-muted); font-size: 12px; }
+
+  .export-btn {
+    background: var(--series-3); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 14px; font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; white-space: nowrap;
+  }
+  .export-btn:hover { filter: brightness(1.08); }
+  .export-btn:disabled { opacity: .6; cursor: default; }
+  .export-status { font-size: 11.5px; color: var(--text-muted); min-height: 14px; }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 20px;
+  }
+  .card h2 { font-size: 16px; font-weight: 700; margin: 0 0 2px; }
+  .card .subtitle { font-size: 12px; color: var(--text-muted); margin: 0 0 14px; }
+
+  .table-scroll {
+    overflow: auto; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface-1); max-height: 640px; box-shadow: var(--shadow);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+  thead th {
+    position: sticky; top: 0; z-index: 1; text-align: left; padding: 10px 12px;
+    background: var(--surface-1); color: var(--text-secondary); font-weight: 700; font-size: 12px;
+    text-transform: uppercase; letter-spacing: .02em; border-bottom: 1px solid var(--gridline);
+    white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  thead th:hover { color: var(--text-primary); }
+  thead th .arrow { color: var(--text-muted); font-size: 10px; margin-left: 4px; }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid var(--gridline); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--page-plane); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .row-count { color: var(--text-muted); font-size: 12px; margin-top: 8px; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge.sem_nfce { background: var(--danger-bg); color: var(--danger); }
+  .badge.sem_nota { background: rgba(235,104,52,0.14); color: var(--series-2); }
+  .badge.divergente { background: rgba(42,120,214,0.14); color: var(--series-1); }
+
+  footer { color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 32px; }
+</style>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Conciliação — Notas Emitidas x NFCe Emitidas</h1>
+    <div class="meta" id="meta-line"></div>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="label">Conciliadas (última extração)</div>
+      <div class="value" id="kpi-ok">—</div>
+      <div class="sub">Num. Controle com Total Geral = Vlr NF</div>
+    </div>
+    <div class="kpi danger">
+      <div class="label">Pendências (no filtro)</div>
+      <div class="value" id="kpi-pendentes">—</div>
+      <div class="sub" id="kpi-pendentes-sub">—</div>
+    </div>
+    <div class="kpi danger">
+      <div class="label">Valor em aberto (no filtro)</div>
+      <div class="value" id="kpi-valor">—</div>
+      <div class="sub">soma das diferenças (R$) da unidade/tipo selecionado</div>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>Unidade</label>
+      <select id="filtro-unidade"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Tipo de pendência</label>
+      <select id="filtro-tipo">
+        <option value="">Todos</option>
+        <option value="SEM_NFCE">Sem NFCe correspondente</option>
+        <option value="SEM_NOTA">Sem Nota correspondente</option>
+        <option value="DIVERGENTE">Valor divergente</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Buscar Num. Controle</label>
+      <input type="search" id="busca-controle" placeholder="ex: 210574">
+    </div>
+    <div class="filter-group">
+      <label>Período</label>
+      <div class="filter-inline">
+        <input type="date" id="data-de">
+        <span>até</span>
+        <input type="date" id="data-ate">
+      </div>
+    </div>
+    <div class="filter-group filter-group--action">
+      <label>&nbsp;</label>
+      <button type="button" class="export-btn" id="exportar-btn" hidden>⬇ Exportar Excel</button>
+      <div class="export-status" id="exportar-status"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Pendências de conciliação</h2>
+    <p class="subtitle">Num. Controle presente em só um dos dois relatórios, ou com valor diferente entre Total Geral (Notas Emitidas) e Vlr NF (NFCe Emitidas). Acumula entre execuções — some da lista quando uma reextração encontra o registro batendo. A exportação e o período selecionado seguem os filtros acima.</p>
+    <div class="table-scroll">
+      <table id="pendencias-table">
+        <thead>
+          <tr>
+            <th data-key="unidade">Unidade</th>
+            <th data-key="controle" class="num">Nº Controle</th>
+            <th data-key="data">Data</th>
+            <th data-key="tipo">Pendência</th>
+            <th data-key="total_geral_notas" class="num">Total Geral (Notas)</th>
+            <th data-key="vlr_nf_nfce" class="num">Vlr NF (NFCe)</th>
+            <th data-key="diferenca" class="num">Diferença</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row-count" id="pendencias-count"></div>
+  </div>
+
+  <footer>Painel gerado automaticamente a partir dos relatórios Notas Emitidas e NFCe Emitidas do Portal Menew.</footer>
+</div>
+
+<script>
+const DATA = {"gerado_em": "2026-09-14T10:13:36", "periodo": {"inicio": "2026-09-11", "fim": "2026-09-13"}, "qtd_conciliadas_ok": 57388, "qtd_pendentes": 110, "pendencias": [{"unidade": "TABERNA 474 (474)", "controle": 211222, "data": "2026-09-13", "tipo": "SEM_NFCE", "total_geral_notas": 1826.08, "vlr_nf_nfce": null, "diferenca": 1826.08}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48909, "data": "2026-09-13", "tipo": "SEM_NFCE", "total_geral_notas": 341.26, "vlr_nf_nfce": null, "diferenca": 341.26}, {"unidade": "CASA EUROPA (CE)", "controle": 37922, "data": "2026-09-13", "tipo": "SEM_NFCE", "total_geral_notas": 1484.82, "vlr_nf_nfce": null, "diferenca": 1484.82}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 214074, "data": "2026-09-13", "tipo": "SEM_NFCE", "total_geral_notas": 1075.76, "vlr_nf_nfce": null, "diferenca": 1075.76}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 108967, "data": "2026-09-13", "tipo": "SEM_NFCE", "total_geral_notas": 296.06, "vlr_nf_nfce": null, "diferenca": 296.06}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48818, "data": "2026-09-12", "tipo": "SEM_NFCE", "total_geral_notas": 2412.55, "vlr_nf_nfce": null, "diferenca": 2412.55}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48743, "data": "2026-09-12", "tipo": "SEM_NFCE", "total_geral_notas": 4290.61, "vlr_nf_nfce": null, "diferenca": 4290.61}, {"unidade": "TABERNA 474 (474)", "controle": 210596, "data": "2026-09-11", "tipo": "SEM_NFCE", "total_geral_notas": 1570.7, "vlr_nf_nfce": null, "diferenca": 1570.7}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48562, "data": "2026-09-11", "tipo": "SEM_NFCE", "total_geral_notas": 3161.74, "vlr_nf_nfce": null, "diferenca": 3161.74}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48545, "data": "2026-09-11", "tipo": "SEM_NFCE", "total_geral_notas": 1279.16, "vlr_nf_nfce": null, "diferenca": 1279.16}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48391, "data": "2026-09-11", "tipo": "SEM_NFCE", "total_geral_notas": 856.54, "vlr_nf_nfce": null, "diferenca": 856.54}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48382, "data": "2026-09-11", "tipo": "SEM_NFCE", "total_geral_notas": 3371.92, "vlr_nf_nfce": null, "diferenca": 3371.92}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 213407, "data": "2026-09-11", "tipo": "SEM_NFCE", "total_geral_notas": 366.12, "vlr_nf_nfce": null, "diferenca": 366.12}, {"unidade": "TABERNA 474 (474)", "controle": 210441, "data": "2026-09-10", "tipo": "SEM_NFCE", "total_geral_notas": 232.78, "vlr_nf_nfce": null, "diferenca": 232.78}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 213312, "data": "2026-09-10", "tipo": "SEM_NFCE", "total_geral_notas": 232.03, "vlr_nf_nfce": null, "diferenca": 232.03}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 213270, "data": "2026-09-10", "tipo": "SEM_NFCE", "total_geral_notas": 481.38, "vlr_nf_nfce": null, "diferenca": 481.38}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 108619, "data": "2026-09-10", "tipo": "SEM_NFCE", "total_geral_notas": 218.09, "vlr_nf_nfce": null, "diferenca": 218.09}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 48192, "data": "2026-09-09", "tipo": "SEM_NFCE", "total_geral_notas": 806.82, "vlr_nf_nfce": null, "diferenca": 806.82}, {"unidade": "TABERNA 474 (474)", "controle": 210118, "data": "2026-09-07", "tipo": "SEM_NFCE", "total_geral_notas": 4662.38, "vlr_nf_nfce": null, "diferenca": 4662.38}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 213050, "data": "2026-09-07", "tipo": "DIVERGENTE", "total_geral_notas": 191.0, "vlr_nf_nfce": 241.0, "diferenca": -50.0}, {"unidade": "CASA EUROPA (CE)", "controle": 36029, "data": "2026-09-06", "tipo": "SEM_NFCE", "total_geral_notas": 544.66, "vlr_nf_nfce": null, "diferenca": 544.66}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 290361, "data": "2026-09-06", "tipo": "SEM_NFCE", "total_geral_notas": 171.76, "vlr_nf_nfce": null, "diferenca": 171.76}, {"unidade": "CASA EUROPA (CE)", "controle": 35929, "data": "2026-09-05", "tipo": "SEM_NFCE", "total_geral_notas": 872.36, "vlr_nf_nfce": null, "diferenca": 872.36}, {"unidade": "TABERNA 474 (474)", "controle": 209534, "data": "2026-09-04", "tipo": "SEM_NFCE", "total_geral_notas": 755.97, "vlr_nf_nfce": null, "diferenca": 755.97}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 108088, "data": "2026-09-04", "tipo": "SEM_NFCE", "total_geral_notas": 506.24, "vlr_nf_nfce": null, "diferenca": 506.24}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 107988, "data": "2026-09-03", "tipo": "SEM_NFCE", "total_geral_notas": 510.76, "vlr_nf_nfce": null, "diferenca": 510.76}, {"unidade": "TABERNA 474 (474)", "controle": 209014, "data": "2026-09-01", "tipo": "SEM_NFCE", "total_geral_notas": 283.63, "vlr_nf_nfce": null, "diferenca": 283.63}, {"unidade": "TABERNA 474 (474)", "controle": 209005, "data": "2026-09-01", "tipo": "SEM_NFCE", "total_geral_notas": 122.04, "vlr_nf_nfce": null, "diferenca": 122.04}, {"unidade": "CASA EUROPA (CE)", "controle": 35037, "data": "2026-08-31", "tipo": "SEM_NFCE", "total_geral_notas": 2785.45, "vlr_nf_nfce": null, "diferenca": 2785.45}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 289099, "data": "2026-08-31", "tipo": "SEM_NFCE", "total_geral_notas": 325.44, "vlr_nf_nfce": null, "diferenca": 325.44}, {"unidade": "TABERNA 474 (474)", "controle": 208599, "data": "2026-08-29", "tipo": "SEM_NFCE", "total_geral_notas": 796.65, "vlr_nf_nfce": null, "diferenca": 796.65}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 211396, "data": "2026-08-29", "tipo": "SEM_NFCE", "total_geral_notas": 1797.84, "vlr_nf_nfce": null, "diferenca": 1797.84}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 46494, "data": "2026-08-28", "tipo": "SEM_NFCE", "total_geral_notas": 3187.73, "vlr_nf_nfce": null, "diferenca": 3187.73}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 210603, "data": "2026-08-26", "tipo": "SEM_NFCE", "total_geral_notas": 500.59, "vlr_nf_nfce": null, "diferenca": 500.59}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 210582, "data": "2026-08-26", "tipo": "SEM_NFCE", "total_geral_notas": 348.04, "vlr_nf_nfce": null, "diferenca": 348.04}, {"unidade": "TABERNA 474 (474)", "controle": 207358, "data": "2026-08-25", "tipo": "SEM_NFCE", "total_geral_notas": 0.01, "vlr_nf_nfce": null, "diferenca": 0.01}, {"unidade": "CASA EUROPA (CE)", "controle": 33856, "data": "2026-08-25", "tipo": "SEM_NFCE", "total_geral_notas": 90.9, "vlr_nf_nfce": null, "diferenca": 90.9}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 287745, "data": "2026-08-25", "tipo": "SEM_NFCE", "total_geral_notas": 11296.61, "vlr_nf_nfce": null, "diferenca": 11296.61}, {"unidade": "TABERNA 474 (474)", "controle": 207322, "data": "2026-08-24", "tipo": "SEM_NFCE", "total_geral_notas": 380.81, "vlr_nf_nfce": null, "diferenca": 380.81}, {"unidade": "TABERNA 474 (474)", "controle": 207286, "data": "2026-08-24", "tipo": "SEM_NFCE", "total_geral_notas": 1402.33, "vlr_nf_nfce": null, "diferenca": 1402.33}, {"unidade": "CASA EUROPA (CE)", "controle": 33798, "data": "2026-08-24", "tipo": "SEM_NFCE", "total_geral_notas": 1828.34, "vlr_nf_nfce": null, "diferenca": 1828.34}, {"unidade": "CASA EUROPA (CE)", "controle": 33794, "data": "2026-08-24", "tipo": "SEM_NFCE", "total_geral_notas": 1048.64, "vlr_nf_nfce": null, "diferenca": 1048.64}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 107185, "data": "2026-08-24", "tipo": "SEM_NFCE", "total_geral_notas": 457.65, "vlr_nf_nfce": null, "diferenca": 457.65}, {"unidade": "TABERNA 474 (474)", "controle": 207165, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 880.27, "vlr_nf_nfce": null, "diferenca": 880.27}, {"unidade": "TABERNA 474 (474)", "controle": 207130, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 96.0, "vlr_nf_nfce": null, "diferenca": 96.0}, {"unidade": "TABERNA 474 (474)", "controle": 207120, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 792.13, "vlr_nf_nfce": null, "diferenca": 792.13}, {"unidade": "TABERNA 474 (474)", "controle": 207043, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 3447.63, "vlr_nf_nfce": null, "diferenca": 3447.63}, {"unidade": "TABERNA 474 (474)", "controle": 207020, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 363.1, "vlr_nf_nfce": null, "diferenca": 363.1}, {"unidade": "TABERNA 474 (474)", "controle": 206996, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 1068.98, "vlr_nf_nfce": null, "diferenca": 1068.98}, {"unidade": "TABERNA 474 (474)", "controle": 206957, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 2254.35, "vlr_nf_nfce": null, "diferenca": 2254.35}, {"unidade": "TABERNA 474 (474)", "controle": 206944, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 584.21, "vlr_nf_nfce": null, "diferenca": 584.21}, {"unidade": "CASA EUROPA (CE)", "controle": 33688, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 379.68, "vlr_nf_nfce": null, "diferenca": 379.68}, {"unidade": "CASA EUROPA (CE)", "controle": 33652, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 577.43, "vlr_nf_nfce": null, "diferenca": 577.43}, {"unidade": "CASA EUROPA (CE)", "controle": 33614, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 1159.38, "vlr_nf_nfce": null, "diferenca": 1159.38}, {"unidade": "CASA EUROPA (CE)", "controle": 33580, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 813.6, "vlr_nf_nfce": null, "diferenca": 813.6}, {"unidade": "CASA EUROPA (CE)", "controle": 33458, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 1918.75, "vlr_nf_nfce": null, "diferenca": 1918.75}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 210115, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 1422.67, "vlr_nf_nfce": null, "diferenca": 1422.67}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 210108, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 439.57, "vlr_nf_nfce": null, "diferenca": 439.57}, {"unidade": "ADEGA SANTIAGO (A4RJ)", "controle": 108529, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 802.3, "vlr_nf_nfce": null, "diferenca": 802.3}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 107137, "data": "2026-08-23", "tipo": "SEM_NFCE", "total_geral_notas": 752.58, "vlr_nf_nfce": null, "diferenca": 752.58}, {"unidade": "TABERNA 474 (474)", "controle": 206713, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 450.87, "vlr_nf_nfce": null, "diferenca": 450.87}, {"unidade": "TABERNA 474 (474)", "controle": 206687, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 2557.19, "vlr_nf_nfce": null, "diferenca": 2557.19}, {"unidade": "TABERNA 474 (474)", "controle": 206606, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 2773.02, "vlr_nf_nfce": null, "diferenca": 2773.02}, {"unidade": "CASA EUROPA (CE)", "controle": 33409, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 932.25, "vlr_nf_nfce": null, "diferenca": 932.25}, {"unidade": "CASA EUROPA (CE)", "controle": 33383, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 452.0, "vlr_nf_nfce": null, "diferenca": 452.0}, {"unidade": "CASA EUROPA (CE)", "controle": 33351, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 1454.31, "vlr_nf_nfce": null, "diferenca": 1454.31}, {"unidade": "CASA EUROPA (CE)", "controle": 33326, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 584.21, "vlr_nf_nfce": null, "diferenca": 584.21}, {"unidade": "CASA EUROPA (CE)", "controle": 33293, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 244.08, "vlr_nf_nfce": null, "diferenca": 244.08}, {"unidade": "CASA EUROPA (CE)", "controle": 33287, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 696.08, "vlr_nf_nfce": null, "diferenca": 696.08}, {"unidade": "CASA EUROPA (CE)", "controle": 33278, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 754.84, "vlr_nf_nfce": null, "diferenca": 754.84}, {"unidade": "CASA EUROPA (CE)", "controle": 33174, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 1130.0, "vlr_nf_nfce": null, "diferenca": 1130.0}, {"unidade": "CASA EUROPA (CE)", "controle": 33117, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 1362.78, "vlr_nf_nfce": null, "diferenca": 1362.78}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 209765, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 196.62, "vlr_nf_nfce": null, "diferenca": 196.62}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 287132, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 193.23, "vlr_nf_nfce": null, "diferenca": 193.23}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 106981, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 387.59, "vlr_nf_nfce": null, "diferenca": 387.59}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 106831, "data": "2026-08-22", "tipo": "SEM_NFCE", "total_geral_notas": 411.33, "vlr_nf_nfce": null, "diferenca": 411.33}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 106828, "data": "2026-08-22", "tipo": "DIVERGENTE", "total_geral_notas": 258.77, "vlr_nf_nfce": 293.87, "diferenca": -35.1}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 45458, "data": "2026-08-21", "tipo": "SEM_NFCE", "total_geral_notas": 0.01, "vlr_nf_nfce": null, "diferenca": 0.01}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 45455, "data": "2026-08-21", "tipo": "SEM_NFCE", "total_geral_notas": 0.01, "vlr_nf_nfce": null, "diferenca": 0.01}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 106795, "data": "2026-08-21", "tipo": "SEM_NFCE", "total_geral_notas": 343.52, "vlr_nf_nfce": null, "diferenca": 343.52}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 106767, "data": "2026-08-21", "tipo": "DIVERGENTE", "total_geral_notas": 873.49, "vlr_nf_nfce": 810.44, "diferenca": 63.05}, {"unidade": "TABERNA 474 (474)", "controle": 206168, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 256.51, "vlr_nf_nfce": null, "diferenca": 256.51}, {"unidade": "TABERNA 474 (474)", "controle": 206103, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 411.32, "vlr_nf_nfce": null, "diferenca": 411.32}, {"unidade": "TABERNA 474 (474)", "controle": 206087, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 482.51, "vlr_nf_nfce": null, "diferenca": 482.51}, {"unidade": "TABERNA 474 (474)", "controle": 206086, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 646.36, "vlr_nf_nfce": null, "diferenca": 646.36}, {"unidade": "TABERNA 474 (474)", "controle": 206079, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 352.56, "vlr_nf_nfce": null, "diferenca": 352.56}, {"unidade": "TABERNA 474 (474)", "controle": 206070, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 159.33, "vlr_nf_nfce": null, "diferenca": 159.33}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 45166, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 236.17, "vlr_nf_nfce": null, "diferenca": 236.17}, {"unidade": "QUINDINS DE YAYA (QY)", "controle": 45070, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 334.85, "vlr_nf_nfce": null, "diferenca": 334.85}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 286587, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 314.14, "vlr_nf_nfce": null, "diferenca": 314.14}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 286490, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 2015.92, "vlr_nf_nfce": null, "diferenca": 2015.92}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 286449, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 496.07, "vlr_nf_nfce": null, "diferenca": 496.07}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 286444, "data": "2026-08-20", "tipo": "SEM_NFCE", "total_geral_notas": 396.63, "vlr_nf_nfce": null, "diferenca": 396.63}, {"unidade": "TABERNA 474 (474)", "controle": 206041, "data": "2026-08-19", "tipo": "SEM_NFCE", "total_geral_notas": 994.4, "vlr_nf_nfce": null, "diferenca": 994.4}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 209202, "data": "2026-08-19", "tipo": "SEM_NFCE", "total_geral_notas": 638.45, "vlr_nf_nfce": null, "diferenca": 638.45}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 209198, "data": "2026-08-19", "tipo": "SEM_NFCE", "total_geral_notas": 1374.08, "vlr_nf_nfce": null, "diferenca": 1374.08}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 106575, "data": "2026-08-19", "tipo": "SEM_NFCE", "total_geral_notas": 494.0, "vlr_nf_nfce": null, "diferenca": 494.0}, {"unidade": "TABERNA 474 (474)", "controle": 205862, "data": "2026-08-18", "tipo": "SEM_NFCE", "total_geral_notas": 622.63, "vlr_nf_nfce": null, "diferenca": 622.63}, {"unidade": "TABERNA 474 (474)", "controle": 205850, "data": "2026-08-18", "tipo": "SEM_NFCE", "total_geral_notas": 925.47, "vlr_nf_nfce": null, "diferenca": 925.47}, {"unidade": "CASA EUROPA (CE)", "controle": 32477, "data": "2026-08-18", "tipo": "SEM_NFCE", "total_geral_notas": 0.01, "vlr_nf_nfce": null, "diferenca": 0.01}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 209062, "data": "2026-08-18", "tipo": "SEM_NFCE", "total_geral_notas": 1011.35, "vlr_nf_nfce": null, "diferenca": 1011.35}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 286149, "data": "2026-08-18", "tipo": "SEM_NFCE", "total_geral_notas": 1489.34, "vlr_nf_nfce": null, "diferenca": 1489.34}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 285992, "data": "2026-08-17", "tipo": "DIVERGENTE", "total_geral_notas": 758.23, "vlr_nf_nfce": 668.96, "diferenca": 89.27}, {"unidade": "ADEGA SANTIAGO (SANTE)", "controle": 208167, "data": "2026-08-15", "tipo": "SEM_NFCE", "total_geral_notas": 2589.96, "vlr_nf_nfce": null, "diferenca": 2589.96}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 285274, "data": "2026-08-15", "tipo": "SEM_NFCE", "total_geral_notas": 701.73, "vlr_nf_nfce": null, "diferenca": 701.73}, {"unidade": "CASA EUROPA (CE)", "controle": 29998, "data": "2026-08-07", "tipo": "SEM_NOTA", "total_geral_notas": null, "vlr_nf_nfce": 948.07, "diferenca": -948.07}, {"unidade": "TABERNA 474 (474)", "controle": 202717, "data": "2026-08-06", "tipo": "SEM_NFCE", "total_geral_notas": 154.81, "vlr_nf_nfce": null, "diferenca": 154.81}, {"unidade": "ADEGA SANTIAGO (A3MA)", "controle": 105206, "data": "2026-08-06", "tipo": "SEM_NFCE", "total_geral_notas": 1288.2, "vlr_nf_nfce": null, "diferenca": 1288.2}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 282740, "data": "2026-08-04", "tipo": "SEM_NFCE", "total_geral_notas": 766.14, "vlr_nf_nfce": null, "diferenca": 766.14}, {"unidade": "ADEGA SANTIAGO (BBM)", "controle": 282700, "data": "2026-08-03", "tipo": "SEM_NFCE", "total_geral_notas": 1053.16, "vlr_nf_nfce": null, "diferenca": 1053.16}], "resumo_por_unidade": {"TABERNA 474 (474)": {"sem_nfce": 32, "sem_nota": 0, "divergente": 0, "valor_pendente": 32307.03}, "QUINDINS DE YAYA (QY)": {"sem_nfce": 13, "sem_nota": 0, "divergente": 0, "valor_pendente": 20279.369999999995}, "CASA EUROPA (CE)": {"sem_nfce": 22, "sem_nota": 1, "divergente": 0, "valor_pendente": 22062.64}, "ADEGA SANTIAGO (SANTE)": {"sem_nfce": 14, "sem_nota": 0, "divergente": 1, "valor_pendente": 12524.46}, "ADEGA SANTIAGO (A3MA)": {"sem_nfce": 11, "sem_nota": 0, "divergente": 2, "valor_pendente": 5764.17}, "ADEGA SANTIAGO (BBM)": {"sem_nfce": 12, "sem_nota": 0, "divergente": 1, "valor_pendente": 19309.44}, "ADEGA SANTIAGO (A4RJ)": {"sem_nfce": 1, "sem_nota": 0, "divergente": 0, "valor_pendente": 802.3}}};
+
+function brl(v) {
+  if (v === null || v === undefined) return '—';
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function fmtDate(iso) {
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+document.getElementById('meta-line').textContent =
+  `Última extração: ${fmtDate(DATA.periodo.inicio)} até ${fmtDate(DATA.periodo.fim)} · gerado em ${new Date(DATA.gerado_em).toLocaleString('pt-BR')}`;
+
+document.getElementById('kpi-ok').textContent = DATA.qtd_conciliadas_ok;
+
+const tipoLabel = { SEM_NFCE: 'Sem NFCe', SEM_NOTA: 'Sem Nota', DIVERGENTE: 'Valor divergente' };
+const tipoBadgeClass = { SEM_NFCE: 'sem_nfce', SEM_NOTA: 'sem_nota', DIVERGENTE: 'divergente' };
+
+const unidades = [...new Set(DATA.pendencias.map(p => p.unidade))].sort();
+const selUnidade = document.getElementById('filtro-unidade');
+selUnidade.innerHTML += unidades.map(u => `<option value="${u}">${u}</option>`).join('');
+
+const tbody = document.querySelector('#pendencias-table tbody');
+const countEl = document.getElementById('pendencias-count');
+const selTipo = document.getElementById('filtro-tipo');
+const buscaEl = document.getElementById('busca-controle');
+const dataDeEl = document.getElementById('data-de');
+const dataAteEl = document.getElementById('data-ate');
+let sortKey = null, sortDir = 1;
+let ultimaFiltrada = [];
+
+const DATA_DE_PADRAO = '2026-08-01'; // filtro inicial do painel -- pendencias mais antigas ficam ocultas por padrao, mas continuam acessiveis ampliando o filtro de periodo
+
+const datasValidas = DATA.pendencias.map(p => p.data).filter(Boolean).sort();
+if (datasValidas.length) {
+  dataDeEl.min = dataAteEl.min = datasValidas[0];
+  dataDeEl.max = dataAteEl.max = datasValidas[datasValidas.length - 1];
+  dataDeEl.value = datasValidas[0] > DATA_DE_PADRAO ? datasValidas[0] : DATA_DE_PADRAO;
+  dataAteEl.value = datasValidas[datasValidas.length - 1];
+}
+
+function render() {
+  const unidade = selUnidade.value;
+  const tipo = selTipo.value;
+  const busca = buscaEl.value.trim();
+  const de = dataDeEl.value;
+  const ate = dataAteEl.value;
+
+  let filtradas = DATA.pendencias.filter(p =>
+    (!unidade || p.unidade === unidade) &&
+    (!tipo || p.tipo === tipo) &&
+    (!busca || String(p.controle).includes(busca)) &&
+    (!de || !p.data || p.data >= de) &&
+    (!ate || !p.data || p.data <= ate)
+  );
+
+  if (sortKey) {
+    filtradas = filtradas.slice().sort((a, b) => {
+      const av = a[sortKey], bv = b[sortKey];
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * sortDir;
+      return String(av ?? '').localeCompare(String(bv ?? '')) * sortDir;
+    });
+  }
+
+  const contagemTipo = { SEM_NFCE: 0, SEM_NOTA: 0, DIVERGENTE: 0 };
+  let valorTotal = 0;
+  for (const p of filtradas) {
+    contagemTipo[p.tipo] = (contagemTipo[p.tipo] || 0) + 1;
+    valorTotal += Math.abs(p.diferenca || 0);
+  }
+  document.getElementById('kpi-pendentes').textContent = filtradas.length;
+  document.getElementById('kpi-pendentes-sub').textContent =
+    `${contagemTipo.SEM_NFCE} sem NFCe · ${contagemTipo.SEM_NOTA} sem nota · ${contagemTipo.DIVERGENTE} divergentes`;
+  document.getElementById('kpi-valor').textContent = brl(valorTotal);
+
+  tbody.innerHTML = filtradas.map(p => `
+    <tr>
+      <td>${p.unidade}</td>
+      <td class="num">${p.controle}</td>
+      <td>${p.data ? fmtDate(p.data) : '—'}</td>
+      <td><span class="badge ${tipoBadgeClass[p.tipo]}">${tipoLabel[p.tipo]}</span></td>
+      <td class="num">${brl(p.total_geral_notas)}</td>
+      <td class="num">${brl(p.vlr_nf_nfce)}</td>
+      <td class="num">${brl(p.diferenca)}</td>
+    </tr>
+  `).join('');
+
+  countEl.textContent = `${filtradas.length} de ${DATA.pendencias.length} pendências`;
+  ultimaFiltrada = filtradas;
+}
+
+selUnidade.addEventListener('change', render);
+selTipo.addEventListener('change', render);
+buscaEl.addEventListener('input', render);
+dataDeEl.addEventListener('change', render);
+dataAteEl.addEventListener('change', render);
+document.querySelectorAll('#pendencias-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+    render();
+  });
+});
+
+// ---------- exportar para Excel (CSV com BOM, abre nativo no Excel) ----------
+
+const exportBtn = document.getElementById('exportar-btn');
+const exportStatus = document.getElementById('exportar-status');
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function gerarCsv(linhas) {
+  const cabecalho = ['Unidade', 'Num. Controle', 'Data', 'Pendência', 'Total Geral (Notas)', 'Vlr NF (NFCe)', 'Diferença'];
+  const corpo = linhas.map(p => [
+    p.unidade,
+    p.controle,
+    p.data ? fmtDate(p.data) : '',
+    tipoLabel[p.tipo],
+    brl(p.total_geral_notas),
+    brl(p.vlr_nf_nfce),
+    brl(p.diferenca),
+  ].map(csvEscape).join(';'));
+  return '﻿' + [cabecalho.join(';'), ...corpo].join('\r\n');
+}
+
+// window.claude so existe dentro do visualizador de Artifact -- fora dele
+// (preview local, arquivo salvo, outro host) o objeto nem existe, entao
+// guarda com optional chaining pra nao quebrar o resto do script.
+window.claude?.use?.('downloads')?.then(downloads => {
+  if (!downloads) return; // capacidade indisponivel nesta visualizacao -- mantem o botao oculto
+  exportBtn.hidden = false;
+  exportBtn.addEventListener('click', async () => {
+    exportBtn.disabled = true;
+    exportStatus.textContent = '';
+    try {
+      const csv = gerarCsv(ultimaFiltrada);
+      const hoje = new Date().toISOString().slice(0, 10);
+      await downloads.save({ filename: `conciliacao_pendencias_${hoje}.csv`, data: csv });
+      exportStatus.textContent = `${ultimaFiltrada.length} pendência(s) exportada(s).`;
+    } catch (e) {
+      if (e && e.code === 'declined') {
+        exportStatus.textContent = 'Exportação cancelada.';
+      } else {
+        exportStatus.textContent = 'Não foi possível exportar agora. Tente de novo em instantes.';
+      }
+    } finally {
+      exportBtn.disabled = false;
+    }
+  });
+});
+
+render();
+</script>
+
+</html>
