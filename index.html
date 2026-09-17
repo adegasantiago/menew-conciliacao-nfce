@@ -362,30 +362,56 @@ function gerarCsv(linhas) {
   return '﻿' + [cabecalho.join(';'), ...corpo].join('\r\n');
 }
 
-// window.claude so existe dentro do visualizador de Artifact -- fora dele
-// (preview local, arquivo salvo, outro host) o objeto nem existe, entao
-// guarda com optional chaining pra nao quebrar o resto do script.
-window.claude?.use?.('downloads')?.then(downloads => {
-  if (!downloads) return; // capacidade indisponivel nesta visualizacao -- mantem o botao oculto
-  exportBtn.hidden = false;
-  exportBtn.addEventListener('click', async () => {
-    exportBtn.disabled = true;
-    exportStatus.textContent = '';
+// baixa um arquivo no navegador do usuario -- tenta a capacidade nativa do
+// Artifact primeiro (window.claude so existe dentro daquele visualizador);
+// fora dele (GitHub Pages, preview local, arquivo salvo, etc.) window.claude
+// nem existe, entao cai pro download padrao do navegador (Blob + <a
+// download>), que funciona em qualquer pagina normal fora do sandbox do
+// Artifact -- e por isso o botao pode ficar sempre visivel, nao só quando a
+// capacidade do Claude estiver disponivel (pedido explicito do usuario em
+// 17/09/2026: queria o export tambem no GitHub Pages).
+async function baixarArquivo(filename, data) {
+  if (window.claude?.use) {
     try {
-      const csv = gerarCsv(ultimaFiltrada);
-      const hoje = new Date().toISOString().slice(0, 10);
-      await downloads.save({ filename: `conciliacao_pendencias_${hoje}.csv`, data: csv });
-      exportStatus.textContent = `${ultimaFiltrada.length} pendência(s) exportada(s).`;
-    } catch (e) {
-      if (e && e.code === 'declined') {
-        exportStatus.textContent = 'Exportação cancelada.';
-      } else {
-        exportStatus.textContent = 'Não foi possível exportar agora. Tente de novo em instantes.';
+      const downloads = await window.claude.use('downloads');
+      if (downloads) {
+        await downloads.save({ filename, data });
+        return;
       }
-    } finally {
-      exportBtn.disabled = false;
+    } catch (e) {
+      if (e && e.code === 'declined') throw e; // usuario cancelou de proposito, nao tenta fallback
+      // qualquer outro erro (capacidade indisponivel, falha momentanea) cai pro fallback abaixo
     }
-  });
+  }
+  const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+exportBtn.hidden = false;
+exportBtn.addEventListener('click', async () => {
+  exportBtn.disabled = true;
+  exportStatus.textContent = '';
+  try {
+    const csv = gerarCsv(ultimaFiltrada);
+    const hoje = new Date().toISOString().slice(0, 10);
+    await baixarArquivo(`conciliacao_pendencias_${hoje}.csv`, csv);
+    exportStatus.textContent = `${ultimaFiltrada.length} pendência(s) exportada(s).`;
+  } catch (e) {
+    if (e && e.code === 'declined') {
+      exportStatus.textContent = 'Exportação cancelada.';
+    } else {
+      exportStatus.textContent = 'Não foi possível exportar agora. Tente de novo em instantes.';
+    }
+  } finally {
+    exportBtn.disabled = false;
+  }
 });
 
 render();
